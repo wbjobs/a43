@@ -5,18 +5,23 @@ export type Phase = 'idle' | 'alice_computing' | 'transmitting' | 'bob_computing
 export interface SimulateResult {
   X: number
   XBinary: string
+  totalLength: number
   alicePhase: {
-    input: string
+    mode: 'exact' | 'lossy'
     output: number
     outputBinary: string
   }
   bobPhase: {
-    input: { X: number; T: string }
+    input: { X: number }
+    totalInferredDiffs: number
     inferredDiffPositions: number[]
   }
+  totalActualDiffs: number
   actualDiffPositions: number[]
+  totalCorrectDiffs: number
   correctPositions: number[]
   accuracy: number
+  isTruncated: boolean
 }
 
 interface SimulationStore {
@@ -33,7 +38,31 @@ interface SimulationStore {
 }
 
 function generateRandomBinary(length: number): string {
-  return Array.from({ length }, () => Math.random() > 0.5 ? '1' : '0').join('')
+  const chunk = 4096
+  let result = ''
+  for (let i = 0; i < length; i += chunk) {
+    const end = Math.min(i + chunk, length)
+    const len = end - i
+    let chunkStr = ''
+    for (let j = 0; j < len; j++) {
+      chunkStr += Math.random() > 0.5 ? '1' : '0'
+    }
+    result += chunkStr
+  }
+  return result
+}
+
+function generateWithDiffs(base: string, numDiffs: number): string {
+  const arr = base.split('')
+  const len = arr.length
+  const positions = new Set<number>()
+  while (positions.size < numDiffs) {
+    positions.add(Math.floor(Math.random() * len))
+  }
+  positions.forEach(pos => {
+    arr[pos] = arr[pos] === '0' ? '1' : '0'
+  })
+  return arr.join('')
 }
 
 export const useSimulationStore = create<SimulationStore>((set, get) => ({
@@ -48,16 +77,9 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
 
   generateRandom: (length: number = 20) => {
     const s = generateRandomBinary(length)
-    let t = s.split('')
-    const numDiffs = Math.max(1, Math.floor(Math.random() * Math.min(5, length)))
-    const positions = new Set<number>()
-    while (positions.size < numDiffs) {
-      positions.add(Math.floor(Math.random() * length))
-    }
-    positions.forEach(pos => {
-      t[pos] = t[pos] === '0' ? '1' : '0'
-    })
-    set({ S: s, T: t.join(''), error: null })
+    const numDiffs = Math.max(1, Math.floor(Math.random() * Math.min(10, Math.floor(length * 0.05) + 1)))
+    const t = generateWithDiffs(s, numDiffs)
+    set({ S: s, T: t, error: null })
   },
 
   startSimulation: async () => {

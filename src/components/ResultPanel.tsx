@@ -1,19 +1,42 @@
 import { useSimulationStore } from '@/store/simulationStore'
 
+function formatNumber(n: number): string {
+  return n.toLocaleString()
+}
+
 export default function ResultPanel() {
   const { result, phase } = useSimulationStore()
 
   if (!result || phase !== 'complete') return null
 
-  const { XBinary, actualDiffPositions, bobPhase, accuracy, correctPositions, X } = result
+  const {
+    XBinary,
+    actualDiffPositions,
+    bobPhase,
+    accuracy,
+    correctPositions,
+    X,
+    totalActualDiffs,
+    totalCorrectDiffs,
+    isTruncated,
+    totalLength,
+    alicePhase,
+  } = result
 
+  const totalInferredDiffs = bobPhase.totalInferredDiffs
   const displayBinary = XBinary.padStart(20, '0').slice(0, 20)
+  const falsePositives = bobPhase.inferredDiffPositions.length - correctPositions.length
 
   return (
     <div className="bg-surface border border-border rounded-xl p-5 space-y-5">
-      <h2 className="font-display text-sm tracking-widest text-accent-green uppercase">
-        通信结果
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-sm tracking-widest text-accent-green uppercase">
+          通信结果
+        </h2>
+        <span className="text-[10px] text-text-dim font-mono">
+          长度: {formatNumber(totalLength)} 位
+        </span>
+      </div>
 
       <div>
         <div className="text-xs text-text-dim mb-2">Alice 发送的 20-bit 整数 X</div>
@@ -34,55 +57,80 @@ export default function ResultPanel() {
             </div>
           ))}
         </div>
-        <div className="text-[10px] text-text-dim mt-2 font-mono">
-          十进制: <span className="text-accent-blue">{X}</span>
+        <div className="text-[10px] text-text-dim mt-2 font-mono flex items-center justify-between">
+          <span>十进制: <span className="text-accent-blue">{X}</span></span>
+          <span>模式: <span className={alicePhase.mode === 'exact' ? 'text-accent-blue' : 'text-yellow-400'}>{alicePhase.mode === 'exact' ? '精确' : '有损'}</span></span>
         </div>
       </div>
 
       <div className="border-t border-border pt-4">
         <div className="text-xs text-text-dim mb-3">差异位置对比</div>
-        <div className="space-y-2.5">
-          <div className="flex items-start gap-3">
-            <span className="text-[10px] text-accent-blue font-display shrink-0 pt-1 w-14">
-              实际差异
-            </span>
-            <div className="flex flex-wrap gap-1 flex-1">
+        <div className="space-y-3">
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] text-accent-blue font-display">
+                实际差异
+              </span>
+              <span className="text-[10px] text-text-dim font-mono">
+                共 <span className="text-accent-blue">{formatNumber(totalActualDiffs)}</span> 个
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1">
               {actualDiffPositions.length > 0 ? (
-                actualDiffPositions.map((pos) => (
-                  <span
-                    key={pos}
-                    className="px-1.5 py-0.5 text-[10px] font-mono bg-accent-blue/15 text-accent-blue rounded border border-accent-blue/30"
-                  >
-                    {pos}
-                  </span>
-                ))
+                <>
+                  {actualDiffPositions.map((pos) => (
+                    <span
+                      key={pos}
+                      className="px-1.5 py-0.5 text-[10px] font-mono bg-accent-blue/15 text-accent-blue rounded border border-accent-blue/30"
+                    >
+                      {pos}
+                    </span>
+                  ))}
+                  {isTruncated && actualDiffPositions.length > 0 && (
+                    <span className="px-1.5 py-0.5 text-[10px] font-mono text-text-dim">
+                      ...
+                    </span>
+                  )}
+                </>
               ) : (
                 <span className="text-xs text-text-dim">无差异</span>
               )}
             </div>
           </div>
 
-          <div className="flex items-start gap-3">
-            <span className="text-[10px] text-accent-green font-display shrink-0 pt-1 w-14">
-              Bob 推断
-            </span>
-            <div className="flex flex-wrap gap-1 flex-1">
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] text-accent-green font-display">
+                Bob 推断
+              </span>
+              <span className="text-[10px] text-text-dim font-mono">
+                共 <span className="text-accent-green">{formatNumber(totalInferredDiffs)}</span> 个
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1">
               {bobPhase.inferredDiffPositions.length > 0 ? (
-                bobPhase.inferredDiffPositions.map((pos) => {
-                  const isCorrect = actualDiffPositions.includes(pos)
-                  return (
-                    <span
-                      key={pos}
-                      className={`px-1.5 py-0.5 text-[10px] font-mono rounded border ${
-                        isCorrect
-                          ? 'bg-accent-green/15 text-accent-green border-accent-green/30'
-                          : 'bg-red-400/15 text-red-400 border-red-400/30'
-                      }`}
-                    >
-                      {pos}
+                <>
+                  {bobPhase.inferredDiffPositions.map((pos) => {
+                    const isCorrect = correctPositions.includes(pos)
+                    return (
+                      <span
+                        key={pos}
+                        className={`px-1.5 py-0.5 text-[10px] font-mono rounded border ${
+                          isCorrect
+                            ? 'bg-accent-green/15 text-accent-green border-accent-green/30'
+                            : 'bg-red-400/15 text-red-400 border-red-400/30'
+                        }`}
+                      >
+                        {pos}
+                      </span>
+                    )
+                  })}
+                  {isTruncated && bobPhase.inferredDiffPositions.length > 0 && (
+                    <span className="px-1.5 py-0.5 text-[10px] font-mono text-text-dim">
+                      ...
                     </span>
-                  )
-                })
+                  )}
+                </>
               ) : (
                 <span className="text-xs text-text-dim">推断无差异</span>
               )}
@@ -122,13 +170,20 @@ export default function ResultPanel() {
             }}
           />
         </div>
-        <div className="text-[10px] text-text-dim mt-2">
-          命中 <span className="text-accent-green">{correctPositions.length}</span> /{' '}
-          <span className="text-text">{actualDiffPositions.length}</span> 个差异位
-          {bobPhase.inferredDiffPositions.length > actualDiffPositions.length && (
-            <span className="text-red-400 ml-2">
-              (误报 {bobPhase.inferredDiffPositions.length - correctPositions.length} 个)
-            </span>
+        <div className="text-[10px] text-text-dim mt-2 space-y-1">
+          <div>
+            命中 <span className="text-accent-green">{formatNumber(totalCorrectDiffs)}</span> /{' '}
+            <span className="text-text">{formatNumber(totalActualDiffs)}</span> 个差异位
+            {totalInferredDiffs > totalCorrectDiffs && (
+              <span className="text-red-400 ml-2">
+                (误报 {formatNumber(totalInferredDiffs - totalCorrectDiffs)} 个)
+              </span>
+            )}
+          </div>
+          {isTruncated && (
+            <div className="text-text-dim/60 italic">
+              * 列表仅显示前 200 个位置，总数为精确统计
+            </div>
           )}
         </div>
       </div>
