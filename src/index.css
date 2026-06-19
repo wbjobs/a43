@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #0a0a0f;
+  --color-surface: #12121a;
+  --color-surface-hover: #1a1a28;
+  --color-border: #2a2a3a;
+  --color-accent-blue: #00e5ff;
+  --color-accent-green: #39ff14;
+  --color-accent-blue-dim: rgba(0, 229, 255, 0.15);
+  --color-accent-green-dim: rgba(57, 255, 20, 0.15);
+  --color-text: #e0e0e8;
+  --color-text-dim: #8888a0;
+  --font-display: 'Orbitron', monospace;
+  --font-body: 'Source Code Pro', monospace;
+
+  font-family: var(--font-body);
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.glow-blue {
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.4), 0 0 4px rgba(0, 229, 255, 0.2);
+}
+
+.glow-green {
+  box-shadow: 0 0 12px rgba(57, 255, 20, 0.4), 0 0 4px rgba(57, 255, 20, 0.2);
+}
+
+.glow-blue-text {
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.6), 0 0 4px rgba(0, 229, 255, 0.3);
+}
+
+.glow-green-text {
+  text-shadow: 0 0 10px rgba(57, 255, 20, 0.6), 0 0 4px rgba(57, 255, 20, 0.3);
+}
+
+@keyframes pulse-glow-blue {
+  0%, 100% { box-shadow: 0 0 8px rgba(0, 229, 255, 0.3), 0 0 2px rgba(0, 229, 255, 0.15); }
+  50% { box-shadow: 0 0 20px rgba(0, 229, 255, 0.6), 0 0 8px rgba(0, 229, 255, 0.3); }
+}
+
+@keyframes pulse-glow-green {
+  0%, 100% { box-shadow: 0 0 8px rgba(57, 255, 20, 0.3), 0 0 2px rgba(57, 255, 20, 0.15); }
+  50% { box-shadow: 0 0 20px rgba(57, 255, 20, 0.6), 0 0 8px rgba(57, 255, 20, 0.3); }
+}
+
+.animate-pulse-blue {
+  animation: pulse-glow-blue 2s ease-in-out infinite;
+}
+
+.animate-pulse-green {
+  animation: pulse-glow-green 2s ease-in-out infinite;
+}
+
+.bit-cell {
+  transition: all 0.3s ease;
+}
+
+.bit-cell:hover {
+  transform: scale(1.15);
+}
+
+.phase-indicator {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
