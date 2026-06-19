@@ -6,11 +6,12 @@ interface ParticleFlowProps {
   active: boolean
   from: [number, number, number]
   to: [number, number, number]
+  colorOverride?: string
 }
 
 const PARTICLE_COUNT = 400
 
-export default function ParticleFlow({ active, from, to }: ParticleFlowProps) {
+export default function ParticleFlow({ active, from, to, colorOverride }: ParticleFlowProps) {
   const pointsRef = useRef<THREE.Points>(null!)
   const particlesRef = useRef<{ t: number; speed: number }[]>([])
   const intensityRef = useRef(0)
@@ -65,8 +66,8 @@ export default function ParticleFlow({ active, from, to }: ParticleFlowProps) {
 
     pointsRef.current.visible = true
 
-    const blue = new THREE.Color('#00e5ff')
-    const green = new THREE.Color('#39ff14')
+    const startColor = colorOverride ? new THREE.Color(colorOverride) : new THREE.Color('#00e5ff')
+    const endColor = colorOverride ? new THREE.Color(colorOverride) : new THREE.Color('#39ff14')
     const tmpColor = new THREE.Color()
     const tmpVec = new THREE.Vector3()
     const particles = particlesRef.current
@@ -98,7 +99,7 @@ export default function ParticleFlow({ active, from, to }: ParticleFlowProps) {
 
       posAttr.setXYZ(i, tmpVec.x + nx, tmpVec.y + ny, tmpVec.z + nz)
 
-      tmpColor.copy(blue).lerp(green, t)
+      tmpColor.copy(startColor).lerp(endColor, t)
 
       const alpha = Math.min(1, t * 4) * Math.min(1, (1 - t) * 3) * intensity
       colAttr.setXYZ(i, tmpColor.r * alpha, tmpColor.g * alpha, tmpColor.b * alpha)

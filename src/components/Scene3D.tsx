@@ -43,9 +43,11 @@ interface ConnectionLineProps {
   from: [number, number, number]
   to: [number, number, number]
   active: boolean
+  colorOverride?: string
+  opacityOverride?: number
 }
 
-function ConnectionLine({ from, to, active }: ConnectionLineProps) {
+function ConnectionLine({ from, to, active, colorOverride, opacityOverride }: ConnectionLineProps) {
   const midPoint = useMemo((): [number, number, number] => [
     (from[0] + to[0]) / 2,
     (from[1] + to[1]) / 2 + 2.5,
@@ -62,40 +64,50 @@ function ConnectionLine({ from, to, active }: ConnectionLineProps) {
 
   const lineObj = useMemo(() => {
     const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(64))
+    const color = colorOverride || (active ? '#00e5ff' : '#1a1a2e')
+    const opacity = opacityOverride !== undefined ? opacityOverride : (active ? 0.4 : 0.15)
     const mat = new THREE.LineBasicMaterial({
-      color: active ? '#00e5ff' : '#1a1a2e',
+      color,
       transparent: true,
-      opacity: active ? 0.4 : 0.15,
+      opacity,
     })
     return new THREE.Line(geo, mat)
-  }, [curve, active])
+  }, [curve, active, colorOverride, opacityOverride])
 
   return <primitive object={lineObj} />
 }
 
 interface Scene3DProps {
   phase: string
+  manipulationMode?: boolean
 }
 
-export default function Scene3D({ phase }: Scene3DProps) {
+export default function Scene3D({ phase, manipulationMode = false }: Scene3DProps) {
   const alicePos: [number, number, number] = [-4, 0, 0]
   const bobPos: [number, number, number] = [4, 0, 0]
 
-  const aliceActive = phase === 'alice_computing' || phase === 'transmitting'
-  const bobActive = phase === 'bob_computing' || phase === 'complete'
-  const particlesActive = phase === 'transmitting'
-  const bobReceiving = phase === 'transmitting'
+  const aliceActive = phase === 'alice_computing' || phase === 'transmitting' || manipulationMode
+  const bobActive = phase === 'bob_computing' || phase === 'complete' || manipulationMode
+  const particlesActive = phase === 'transmitting' || manipulationMode
+  const bobReceiving = phase === 'transmitting' || manipulationMode
+
+  const connectionColor = manipulationMode ? '#c084fc' : phase !== 'idle' ? '#00e5ff' : '#1a1a2e'
+  const connectionOpacity = manipulationMode ? 0.6 : phase !== 'idle' ? 0.4 : 0.15
 
   return (
     <>
-      <ambientLight intensity={0.25} />
+      <ambientLight intensity={manipulationMode ? 0.35 : 0.25} />
       <directionalLight position={[5, 5, 5]} intensity={0.3} />
+
+      {manipulationMode && (
+        <pointLight position={[0, 3, 0]} color="#c084fc" intensity={2} distance={15} />
+      )}
 
       <StarField />
 
       <AIEntity
         position={alicePos}
-        color="#00e5ff"
+        color={manipulationMode ? '#c084fc' : '#00e5ff'}
         label="Alice"
         isActive={aliceActive}
         isReceiving={false}
@@ -103,15 +115,15 @@ export default function Scene3D({ phase }: Scene3DProps) {
 
       <AIEntity
         position={bobPos}
-        color="#39ff14"
+        color={manipulationMode ? '#c084fc' : '#39ff14'}
         label="Bob"
         isActive={bobActive}
         isReceiving={bobReceiving}
       />
 
-      <ConnectionLine from={alicePos} to={bobPos} active={phase !== 'idle'} />
+      <ConnectionLine from={alicePos} to={bobPos} active={phase !== 'idle' || manipulationMode} colorOverride={connectionColor} opacityOverride={connectionOpacity} />
 
-      <ParticleFlow active={particlesActive} from={alicePos} to={bobPos} />
+      <ParticleFlow active={particlesActive} from={alicePos} to={bobPos} colorOverride={manipulationMode ? '#c084fc' : undefined} />
     </>
   )
 }

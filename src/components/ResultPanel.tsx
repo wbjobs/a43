@@ -1,11 +1,12 @@
 import { useSimulationStore } from '@/store/simulationStore'
+import { Sliders } from 'lucide-react'
 
 function formatNumber(n: number): string {
   return n.toLocaleString()
 }
 
 export default function ResultPanel() {
-  const { result, phase } = useSimulationStore()
+  const { result, phase, manipulationMode, enterManipulationMode } = useSimulationStore()
 
   if (!result || phase !== 'complete') return null
 
@@ -26,6 +27,8 @@ export default function ResultPanel() {
   const totalInferredDiffs = bobPhase.totalInferredDiffs
   const displayBinary = XBinary.padStart(20, '0').slice(0, 20)
   const falsePositives = bobPhase.inferredDiffPositions.length - correctPositions.length
+
+  if (manipulationMode) return null
 
   return (
     <div className="bg-surface border border-border rounded-xl p-5 space-y-5">
@@ -185,6 +188,19 @@ export default function ResultPanel() {
               * 列表仅显示前 200 个位置，总数为精确统计
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="border-t border-border pt-4">
+        <button
+          onClick={enterManipulationMode}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-500/10 border border-purple-500/40 rounded-lg text-sm font-display text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/60 transition-all"
+        >
+          <Sliders size={14} />
+          进入操控模式 · 手动调节 X 值
+        </button>
+        <div className="text-[9px] text-text-dim/60 mt-2 text-center">
+          深入理解 20-bit 信息如何编码差异位置
         </div>
       </div>
     </div>
